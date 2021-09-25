@@ -5,6 +5,7 @@ import os
 import markdown
 import codecs
 import sys
+import platform
 
 class WebPanel(wx.Panel):
 	def __init__(self, parent):
@@ -159,11 +160,12 @@ class Window(wx.Frame):
 
 	def focus(self, focus):
 		focus.SetFocus()
-		robot = wx.UIActionSimulator()  
-		position = focus.GetPosition() 
-		position = focus.ClientToScreen(position) 
-		robot.MouseMove(position) 
-		robot.MouseClick()    
+		if platform.system() == "Windows":
+			robot = wx.UIActionSimulator()  
+			position = focus.GetPosition() 
+			position = focus.ClientToScreen(position) 
+			robot.MouseMove(position) 
+			robot.MouseClick()    
 
 	def OnNotebookChanged(self, e):
 		focus = None
