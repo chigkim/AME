@@ -1,0 +1,1 @@
+pyinstaller -F --onefile --noconsole ame.py

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import wx
 from wx.html2 import WebView
 import os
@@ -13,8 +13,6 @@ class WebPanel(wx.Panel):
 		bsizer = wx.BoxSizer()
 		bsizer.Add(self.browser, 1, wx.EXPAND)
 		self.SetSizerAndFit(bsizer)
-		
-		
 
 class MdPanel(wx.Panel):
 	def __init__(self, parent):
@@ -42,12 +40,14 @@ class Window(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onSaveAs, saveAsMenu)
 		exportMenu = fileMenu.Append(wx.ID_ANY, "&Export\tCTRL+E")
 		self.Bind(wx.EVT_MENU, self.onExport, exportMenu)
+		clipboardMenu = fileMenu.Append(wx.ID_ANY, "&Copy HTML to Clipboard\tCTRL+SHIFT+C")
+		self.Bind(wx.EVT_MENU, self.onClipboard, clipboardMenu)
 		exitMenu = fileMenu.Append(wx.ID_EXIT)
 		self.Bind(wx.EVT_MENU, self.OnExit, exitMenu)
 		viewMenu= wx.Menu()
-		htmlMenu = viewMenu.Append(wx.ID_ANY, "&HTML\tCTRL+H")
+		htmlMenu = viewMenu.Append(wx.ID_ANY, "&HTML\tCTRL+2")
 		self.Bind(wx.EVT_MENU, self.onViewHtml, htmlMenu)
-		markdownMenu = viewMenu.Append(wx.ID_ANY, "&Markdown\tCTRL+M")
+		markdownMenu = viewMenu.Append(wx.ID_ANY, "&Markdown\tCTRL+1")
 		self.Bind(wx.EVT_MENU, self.onViewMarkdown, markdownMenu)
 
 		menuBar = wx.MenuBar()
@@ -62,7 +62,11 @@ class Window(wx.Frame):
 		self.nb.AddPage(self.WebPanel, "HTML")
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnNotebookChanged, self.nb)
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
+		bsizer = wx.BoxSizer()
+		bsizer.Add(self.nb, 1, wx.EXPAND)
+		self.SetSizerAndFit(bsizer)
 		self.Show(True)
+		self.Maximize(True)
 		self.SetTitle("Untitled | Markdown Editor")
 		if len(sys.argv) > 1:
 			self.dirname = os.path.dirname(sys.argv[1])
@@ -74,8 +78,8 @@ class Window(wx.Frame):
 		self.mdPanel.control.ChangeValue(f.read())
 		f.close()
 		self.edited = False
-		self.nb.SetSelection(0)
 		self.SetTitle(self.filename+" | Markdown Editor")
+		self.nb.SetSelection(0)
 
 	def onOpen(self,e):
 		if self.edited:
@@ -125,6 +129,13 @@ class Window(wx.Frame):
 			htmlText = markdown.markdown(self.mdPanel.control.GetValue())
 			output_file.write(htmlText)
 
+	def onClipboard(self, e):
+		self.convert()
+		htmlText = markdown.markdown(self.mdPanel.control.GetValue())
+		if wx.TheClipboard.Open():
+			wx.TheClipboard.SetData(wx.TextDataObject(htmlText))
+			wx.TheClipboard.Close()
+
 	def OnExit(self,e):
 		if self.edited:
 			if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm", wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO: return
@@ -146,6 +157,14 @@ class Window(wx.Frame):
 	def onViewMarkdown(self, e):
 		self.nb.SetSelection(0)
 
+	def focus(self, focus):
+		focus.SetFocus()
+		robot = wx.UIActionSimulator()  
+		position = focus.GetPosition() 
+		position = focus.ClientToScreen(position) 
+		robot.MouseMove(position) 
+		robot.MouseClick()    
+
 	def OnNotebookChanged(self, e):
 		focus = None
 		if e.GetSelection() == 0:
@@ -153,12 +172,7 @@ class Window(wx.Frame):
 		else:
 			focus =self.WebPanel.browser
 			self.convert()
-		robot = wx.UIActionSimulator() 
-		focus.SetFocus() 
-		position = focus.GetPosition() 
-		position = focus.ClientToScreen(position) 
-		robot.MouseMove(position) 
-		robot.MouseClick()  
+		self.focus(focus)
 		
 	def convert(self):
 		htmlText = markdown.markdown(self.mdPanel.control.GetValue())
