@@ -127,12 +127,12 @@ class Window(wx.Frame):
 			dirname = dlg.GetDirectory()
 			file = os.path.join(dirname, filename)
 			output_file = codecs.open(file, "w", encoding="utf-8", errors="xmlcharrefreplace")
-			htmlText = markdown.markdown(self.mdPanel.control.GetValue())
+			htmlText = markdown.markdown(self.mdPanel.control.GetValue(), extensions=['extra'])
 			output_file.write(htmlText)
 
 	def onClipboard(self, e):
 		self.convert()
-		htmlText = markdown.markdown(self.mdPanel.control.GetValue())
+		htmlText = markdown.markdown(self.mdPanel.control.GetValue(), extensions=['extra'])
 		if wx.TheClipboard.Open():
 			wx.TheClipboard.SetData(wx.TextDataObject(htmlText))
 			wx.TheClipboard.Close()
@@ -177,7 +177,7 @@ class Window(wx.Frame):
 		self.focus(focus)
 		
 	def convert(self):
-		htmlText = markdown.markdown(self.mdPanel.control.GetValue())
+		htmlText = markdown.markdown(self.mdPanel.control.GetValue(), extensions=['extra'])
 		self.WebPanel.browser.SetPage(htmlText, "")
 
 app = wx.App(False)
