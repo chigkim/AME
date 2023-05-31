@@ -82,9 +82,18 @@ class Window(wx.Frame):
 		self.SetTitle(self.filename+" | Markdown Editor")
 		self.nb.SetSelection(0)
 
+	def shouldSave(self):
+		dlg = wx.MessageDialog(None, "Recent change has not been saved.", 'Save?', wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
+		dlg.SetYesNoLabels("Save", "Discard")
+		res = dlg.ShowModal()
+		if res == wx.ID_YES:
+			if self.onSave(None) == wx.ID_CANCEL:
+				return wx.ID_CANCEL
+		return res
+
 	def onOpen(self,e):
 		if self.edited:
-			if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm", wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO: return
+			if self.shouldSave() == wx.ID_CANCEL: return
 		with wx.FileDialog(self, "Open", self.dirname, "", "*.*", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
 			if dlg.ShowModal() == wx.ID_CANCEL: return
 			self.filename = dlg.GetFilename()
@@ -93,7 +102,7 @@ class Window(wx.Frame):
 
 	def onNew(self, e):
 		if self.edited:
-			if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm", wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO: return
+			if self.shouldSave() == wx.ID_CANCEL: return
 		self.WebPanel.browser.SetPage("", "")
 		self.mdPanel.control.SetValue("")
 		self.edited = False
@@ -108,12 +117,12 @@ class Window(wx.Frame):
 		self.edited = False
 
 	def onSave(self, e):
-		if self.filename == "": self.onSaveAs(e)
+		if self.filename == "": return self.onSaveAs(e)
 		else: self.save()
 
 	def onSaveAs(self, e):
 		with wx.FileDialog(self, "Save", self.dirname, "", "*.md", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as dlg:
-			if dlg.ShowModal() == wx.ID_CANCEL: return
+			if dlg.ShowModal() == wx.ID_CANCEL: return wx.ID_CANCEL
 			self.filename = dlg.GetFilename()
 			self.dirname = dlg.GetDirectory()
 			self.save()
@@ -139,12 +148,12 @@ class Window(wx.Frame):
 
 	def OnExit(self,e):
 		if self.edited:
-			if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm", wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO: return
+			if self.shouldSave() == wx.ID_CANCEL: return
 		self.Close(True)
 
 	def onClose(self, event):
 		if event.CanVeto() and self.edited:
-			if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm", wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+			if self.shouldSave() == wx.ID_CANCEL:
 				event.Veto()
 				return
 		self.Destroy()
